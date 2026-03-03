@@ -1,1 +1,93 @@
-.
+name: Build UF2 (silent_display_3x3)
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - "v*"
+    paths:
+      - "keyboards/silent_display_3x3/**"
+      - ".github/workflows/build-uf2-silent_display_3x3.yml"
+  pull_request:
+    paths:
+      - "keyboards/silent_display_3x3/**"
+      - ".github/workflows/build-uf2-silent_display_3x3.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            rsync \
+            gcc-arm-none-eabi binutils-arm-none-eabi \
+            python3-pip
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install QMK CLI
+        run: |
+          python -m pip install --upgrade pip
+          pip install qmk
+
+      - name: Set up QMK firmware
+        run: |
+          qmk setup -H ~/qmk_firmware -y
+
+      - name: Copy keyboard into QMK tree
+        run: |
+          mkdir -p ~/qmk_firmware/keyboards/silent_display_3x3
+          rsync -a --delete \
+            --exclude '.git' \
+            --exclude '.github' \
+            "$GITHUB_WORKSPACE/keyboards/silent_display_3x3/" \
+            ~/qmk_firmware/keyboards/silent_display_3x3/
+
+      - name: Compile (custom)
+        run: |
+          qmk compile -kb silent_display_3x3 -km custom
+          ls -la ~/qmk_firmware/.build || true
+          find ~/qmk_firmware/.build -maxdepth 1 -type f -name "*.uf2" -print
+
+      - name: Upload UF2 artifact (custom)
+        uses: actions/upload-artifact@v4
+        with:
+          name: silent_display_3x3_custom_uf2
+          path: |
+            ~/qmk_firmware/.build/*.uf2
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download UF2 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: silent_display_3x3_custom_uf2
+          path: dist
+
+      - name: List files
+        run: |
+          find dist -type f -maxdepth 4 -print
+
+      - name: Create GitHub Release (attach UF2)
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/**/*.uf2
