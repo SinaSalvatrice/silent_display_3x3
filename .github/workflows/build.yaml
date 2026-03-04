@@ -64,13 +64,22 @@ jobs:
       - name: Compile (custom)
         run: |
           qmk compile -kb silent_display_3x3 -km custom
+          ls -la /home/runner/qmk_firmware || true
           ls -la /home/runner/qmk_firmware/.build || true
-          find /home/runner/qmk_firmware/.build -maxdepth 1 -type f -name "*.uf2" -print
+          find /home/runner/qmk_firmware -maxdepth 1 -type f \( -name "*.uf2" -o -name "*.hex" -o -name "*.bin" -o -name "*.elf" \) -print
+          find /home/runner/qmk_firmware/.build -maxdepth 1 -type f \( -name "*.uf2" -o -name "*.hex" -o -name "*.bin" -o -name "*.elf" \) -print
 
       - name: Upload build outputs (custom)
         uses: actions/upload-artifact@v4
         with:
           name: silent_display_3x3_custom_build
           path: |
+            /home/runner/qmk_firmware/*.uf2
+            /home/runner/qmk_firmware/*.hex
+            /home/runner/qmk_firmware/*.bin
+            /home/runner/qmk_firmware/*.elf
             /home/runner/qmk_firmware/.build/*.uf2
+            /home/runner/qmk_firmware/.build/*.hex
+            /home/runner/qmk_firmware/.build/*.bin
+            /home/runner/qmk_firmware/.build/*.elf
           if-no-files-found: error
