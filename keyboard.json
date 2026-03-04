@@ -29,6 +29,9 @@
         "pid": "0x3333",
         "vid": "0xFEED"
     },
+    "dynamic_keymap": {
+        "layer_count": 9
+    },
     "features": {
         "bootmagic": true,
         "extrakey": true,
