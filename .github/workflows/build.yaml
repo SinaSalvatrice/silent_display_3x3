@@ -52,12 +52,12 @@ jobs:
 
       - name: Copy keyboard into QMK tree
         run: |
-          mkdir -p ~/qmk_firmware/silent_display_3x3
+          mkdir -p ~/qmk_firmware/keyboards/silent_display_3x3
           rsync -a --delete \
             --exclude '.git' \
             --exclude '.github' \
             "$GITHUB_WORKSPACE/" \
-            ~/qmk_firmware/silent_display_3x3/
+            ~/qmk_firmware/keyboards/silent_display_3x3/
 
       - name: Compile (custom)
         run: |
