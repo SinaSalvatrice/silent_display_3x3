@@ -46,54 +46,31 @@ jobs:
 
       - name: Set up QMK firmware
         run: |
-          git clone --depth 1 --branch master https://github.com/qmk/qmk_firmware.git ~/qmk_firmware
-          cd ~/qmk_firmware
+          git clone --depth 1 --branch master https://github.com/qmk/qmk_firmware.git /home/runner/qmk_firmware
+          cd /home/runner/qmk_firmware
           git submodule update --init --recursive --depth 1
           pip install -r requirements.txt
-          qmk config user.qmk_home=~/qmk_firmware
+          qmk config user.qmk_home=/home/runner/qmk_firmware
 
       - name: Copy keyboard into QMK tree
         run: |
-          mkdir -p ~/qmk_firmware/keyboards/silent_display_3x3
+          mkdir -p /home/runner/qmk_firmware/keyboards/silent_display_3x3
           rsync -a --delete \
             --exclude '.git' \
             --exclude '.github' \
             "$GITHUB_WORKSPACE/" \
-            ~/qmk_firmware/keyboards/silent_display_3x3/
+            /home/runner/qmk_firmware/keyboards/silent_display_3x3/
 
       - name: Compile (custom)
         run: |
           qmk compile -kb silent_display_3x3 -km custom
-          ls -la ~/qmk_firmware/.build || true
-          find ~/qmk_firmware/.build -maxdepth 1 -type f -name "*.uf2" -print
+          ls -la /home/runner/qmk_firmware/.build || true
+          find /home/runner/qmk_firmware/.build -maxdepth 1 -type f -name "*.uf2" -print
 
       - name: Upload build outputs (custom)
         uses: actions/upload-artifact@v4
         with:
-        
-        name: silent_display_3x3_custom_build
-        path: |
-        ~/qmk_firmware/.build/*
-        if-no-files-found: error
-
-  release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download UF2 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: silent_display_3x3_custom_uf2
-          path: dist
-
-      - name: List files
-        run: |
-          find dist -type f -maxdepth 4 -print
-
-      - name: Create GitHub Release (attach UF2)
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            dist/**/*.uf2
+          name: silent_display_3x3_custom_build
+          path: |
+            /home/runner/qmk_firmware/.build/*.uf2
+          if-no-files-found: error
