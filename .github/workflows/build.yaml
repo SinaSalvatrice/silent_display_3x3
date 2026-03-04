@@ -1,9 +1,3 @@
-
-- name: Install avr-gcc
-  run: sudo apt-get update && sudo apt-get install -y gcc-avr avr-libc
-
-
-
 name: Build UF2 (silent_display_3x3)
 
 on:
