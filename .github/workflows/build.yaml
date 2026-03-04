@@ -6,12 +6,10 @@ on:
     tags:
       - "v*"
     paths:
-      - "keyboards/silent_display_3x3/**"
-      - ".github/workflows/build-uf2-silent_display_3x3.yml"
+      - "**"
   pull_request:
     paths:
-      - "silent_display_3x3/**"
-      - ".github/workflows/build-uf2-silent_display_3x3.yml"
+      - "**"
   workflow_dispatch:
 
 permissions:
@@ -48,7 +46,11 @@ jobs:
 
       - name: Set up QMK firmware
         run: |
-          qmk setup -H ~/qmk_firmware -y
+          git clone --depth 1 --branch master https://github.com/qmk/qmk_firmware.git ~/qmk_firmware
+          cd ~/qmk_firmware
+          git submodule update --init --recursive --depth 1
+          pip install -r requirements.txt
+          qmk config user.qmk_home=~/qmk_firmware
 
       - name: Copy keyboard into QMK tree
         run: |
