@@ -1,7 +1,7 @@
 #pragma once
 
 // Encoder button – active-low against GND, internal pull-up enabled
-#define ENCODER_BTN_PIN GP12
+#define ENCODER_BTN_PIN GP10
 
 // WS2812 RGB LEDs (10 LEDs, data on GP13)
 #define WS2812_DI_PIN GP13
@@ -18,3 +18,4 @@
 #define I2C1_SCL_PIN GP1
 #define I2C1_SDA_PIN GP0
 #define OLED_TIMEOUT 60000
+
