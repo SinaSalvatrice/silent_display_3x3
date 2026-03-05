@@ -9,5 +9,6 @@ ENCODER_ENABLE    = yes
 ENCODER_MAP_ENABLE = no
 OLED_ENABLE       = yes
 OLED_DRIVER       = ssd1306
+WEAR_LEVELING_DRIVER = rp2040_flash
 
 
