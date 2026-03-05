@@ -3,9 +3,14 @@
 // Encoder button – active-low against GND, internal pull-up enabled
 #define ENCODER_BTN_PIN GP10
 
-// WS2812 RGB LEDs (10 LEDs, data on GP13)
-#define WS2812_DI_PIN GP13
+// WS2812 RGB LEDs (10 LEDs, data pin defined in keyboard.json as GP11)
 #define RGBLIGHT_LED_COUNT 10
+
+// Double-tap the reset button to enter the RP2040 UF2 bootloader;
+// this avoids the BOOTSEL+replug timing issue that causes Windows to
+// report "USB device not recognised" when trying to flash firmware.
+#define RP2040_BOOTLOADER_DOUBLE_TAP_RESET
+#define RP2040_BOOTLOADER_DOUBLE_TAP_RESET_TIMEOUT 500
 #define RGBLIGHT_LIMIT_VAL 150
 #define RGBLIGHT_DEFAULT_MODE  RGBLIGHT_MODE_STATIC_LIGHT
 #define RGBLIGHT_DEFAULT_HUE   149
