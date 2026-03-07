@@ -4,8 +4,8 @@
 #define ENCODER_BTN_PIN GP12
 
 // WS2812 RGB LEDs (10 LEDs, data on GP13)
-#define WS2812_DI_PIN GP13
-#define RGBLIGHT_LED_COUNT 10
+// WS2812_DI_PIN and RGBLIGHT_LED_COUNT are defined by keyboard.json;
+// redefining them here causes macro-redefinition errors.
 #define RGBLIGHT_LIMIT_VAL 150
 #define RGBLIGHT_DEFAULT_MODE  RGBLIGHT_MODE_STATIC_LIGHT
 #define RGBLIGHT_DEFAULT_HUE   149

@@ -1,6 +1,4 @@
-
 #include QMK_KEYBOARD_H
-#include "timer.h"
 
 // ---------------------------------------------------------------------------
 // Layer definitions
@@ -19,7 +17,6 @@ enum layer_names {
 // ---------------------------------------------------------------------------
 static bool     btn_pressed          = false;
 static bool     btn_held_with_turn   = false;
-static uint16_t btn_timer            = 0;
 
 // ---------------------------------------------------------------------------
 // Layer-selector state
@@ -87,7 +84,6 @@ void matrix_scan_user(void) {
         // Rising edge: button just pressed
         btn_pressed        = true;
         btn_held_with_turn = false;
-        btn_timer          = timer_read();
     } else if (!is_pressed && btn_pressed) {
         // Falling edge: button just released
         btn_pressed = false;
