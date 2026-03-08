@@ -14,7 +14,7 @@
             { "pin_a": "GP8", "pin_b": "GP9", "resolution": 4 }
         ]
     },
-    "ws2812": { "pin": "GP29" },
+    "ws2812": { "pin": "GP13" },
     "rgblight": {
         "led_count": 10,
         "animations": {
@@ -32,7 +32,8 @@
     "features": {
         "bootmagic": true,
         "encoder": true,
-        "rgblight": true
+        "rgblight": true,
+        "via": true
     },
     "layouts": {
         "LAYOUT": {
