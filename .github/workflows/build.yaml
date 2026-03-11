@@ -1,4 +1,4 @@
-name: Build UF2 (silent_display_3x3)
+name: Build UF2 (silent_display_3x3_custom)
 
 on:
   push:
