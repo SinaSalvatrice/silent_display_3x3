@@ -61,18 +61,103 @@ jobs:
             "$GITHUB_WORKSPACE/" \
             /home/runner/qmk_firmware/keyboards/silent_display_3x3/
 
-      - name: Compile (via)
+      - name: Compile (custom)
         run: |
-          qmk compile -kb silent_display_3x3 -km via
+          qmk compile -kb silent_display_3x3 -km custom
           ls -la /home/runner/qmk_firmware || true
           ls -la /home/runner/qmk_firmware/.build || true
           find /home/runner/qmk_firmware -maxdepth 1 -type f \( -name "*.uf2" -o -name "*.hex" -o -name "*.bin" -o -name "*.elf" \) -print
           find /home/runner/qmk_firmware/.build -maxdepth 1 -type f \( -name "*.uf2" -o -name "*.hex" -o -name "*.bin" -o -name "*.elf" \) -print
 
-      - name: Upload build outputs (via)
+      - name: Upload build outputs (custom)
         uses: actions/upload-artifact@v4
         with:
-          name: silent_display_3x3_via_build
+          name: silent_display_3x3_custom_build
+          path: |
+            /home/runner/qmk_firmware/*.uf2
+            /home/runner/qmk_firmware/*.hex
+            /home/runner/qmk_firmware/*.bin
+            /home/runner/qmk_firmware/*.elf
+            /home/runner/qmk_firmware/.build/*.uf2
+            /home/runner/qmk_firmware/.build/*.hex
+            /home/runner/qmk_firmware/.build/*.bin
+            /home/runner/qmk_firmware/.build/*.elf
+          if-no-files-found: error
+name: Build UF2 (silent_display_3x3)
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - "v*"
+    paths:
+      - "**"
+  pull_request:
+    paths:
+      - "**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            rsync \
+            gcc-arm-none-eabi binutils-arm-none-eabi \
+            python3-pip
+
+      - name: Install avr-gcc
+        run: sudo apt-get update && sudo apt-get install -y gcc-avr avr-libc
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install QMK CLI
+        run: |
+          python -m pip install --upgrade pip
+          pip install qmk
+
+      - name: Set up QMK firmware
+        run: |
+          git clone --depth 1 --branch master https://github.com/qmk/qmk_firmware.git /home/runner/qmk_firmware
+          cd /home/runner/qmk_firmware
+          git submodule update --init --recursive --depth 1
+          pip install -r requirements.txt
+          qmk config user.qmk_home=/home/runner/qmk_firmware
+
+      - name: Copy keyboard into QMK tree
+        run: |
+          mkdir -p /home/runner/qmk_firmware/keyboards/silent_display_3x3
+          rsync -a --delete \
+            --exclude '.git' \
+            --exclude '.github' \
+            "$GITHUB_WORKSPACE/" \
+            /home/runner/qmk_firmware/keyboards/silent_display_3x3/
+
+      - name: Compile (custom)
+        run: |
+          qmk compile -kb silent_display_3x3 -km custom
+          ls -la /home/runner/qmk_firmware || true
+          ls -la /home/runner/qmk_firmware/.build || true
+          find /home/runner/qmk_firmware -maxdepth 1 -type f \( -name "*.uf2" -o -name "*.hex" -o -name "*.bin" -o -name "*.elf" \) -print
+          find /home/runner/qmk_firmware/.build -maxdepth 1 -type f \( -name "*.uf2" -o -name "*.hex" -o -name "*.bin" -o -name "*.elf" \) -print
+
+      - name: Upload build outputs (custom)
+        uses: actions/upload-artifact@v4
+        with:
+          name: silent_display_3x3_custom_build
           path: |
             /home/runner/qmk_firmware/*.uf2
             /home/runner/qmk_firmware/*.hex
