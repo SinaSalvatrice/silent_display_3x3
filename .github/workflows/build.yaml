@@ -63,7 +63,7 @@ jobs:
 
       - name: Compile (via)
         run: |
-          qmk compile -kb silent_display_3x3 -km custom
+          qmk compile -kb silent_display_3x3 -km via
           ls -la /home/runner/qmk_firmware || true
           ls -la /home/runner/qmk_firmware/.build || true
           find /home/runner/qmk_firmware -maxdepth 1 -type f \( -name "*.uf2" -o -name "*.hex" -o -name "*.bin" -o -name "*.elf" \) -print
