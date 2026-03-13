@@ -69,8 +69,32 @@ enum MediaAction {
   MA_VOL_DOWN
 };
 
+const uint8_t CYCLABLE_LAYERS[] = {L_BASE, L_EDIT, L_MEDIA, L_FN, L_RGB, L_SYS, L_NAV, L_NUM};
+const uint8_t CYCLABLE_COUNT = sizeof(CYCLABLE_LAYERS) / sizeof(CYCLABLE_LAYERS[0]);
+
 long lastEncoderPos = 0;
 unsigned long lastDisplayMs = 0;
+
+uint8_t nextCyclableLayer(uint8_t current, bool clockwise) {
+  int idx = -1;
+  for (uint8_t i = 0; i < CYCLABLE_COUNT; i++) {
+    if (CYCLABLE_LAYERS[i] == current) {
+      idx = i;
+      break;
+    }
+  }
+
+  if (idx < 0) {
+    return L_BASE;
+  }
+
+  if (clockwise) {
+    idx = (idx + 1) % CYCLABLE_COUNT;
+  } else {
+    idx = (idx == 0) ? (CYCLABLE_COUNT - 1) : (idx - 1);
+  }
+  return CYCLABLE_LAYERS[idx];
+}
 
 uint32_t layerColor(uint8_t layer) {
   switch (layer) {
@@ -361,8 +385,7 @@ void handleEncoderClick() {
 void handleEncoderTurn(bool clockwise) {
   if (btnPressed) {
     btnTurned = true;
-    activeLayer = (clockwise) ? (uint8_t)((activeLayer + 1) % L_COUNT)
-                              : (uint8_t)((activeLayer + L_COUNT - 1) % L_COUNT);
+    activeLayer = nextCyclableLayer(activeLayer, clockwise);
     applyRgb();
     return;
   }
@@ -388,11 +411,7 @@ void handleEncoderTurn(bool clockwise) {
       applyRgb();
       break;
     case L_SELECT:
-      if (clockwise) {
-        pendingLayer = (pendingLayer + 1) % L_COUNT;
-      } else {
-        pendingLayer = (pendingLayer + L_COUNT - 1) % L_COUNT;
-      }
+      pendingLayer = nextCyclableLayer(pendingLayer, clockwise);
       break;
   }
 }

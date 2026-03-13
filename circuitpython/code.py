@@ -36,6 +36,7 @@ L_SYS = 6
 L_NAV = 7
 L_NUM = 8
 LAYER_COUNT = 9
+CYCLABLE_LAYERS = (L_BASE, L_EDIT, L_MEDIA, L_FN, L_RGB, L_SYS, L_NAV, L_NUM)
 
 active_layer = L_BASE
 pending_layer = L_BASE
@@ -322,6 +323,19 @@ def toggle_rgb():
     apply_rgb()
 
 
+def next_cyclable_layer(current, clockwise):
+    try:
+        idx = CYCLABLE_LAYERS.index(current)
+    except ValueError:
+        return L_BASE
+
+    if clockwise:
+        idx = (idx + 1) % len(CYCLABLE_LAYERS)
+    else:
+        idx = (idx - 1) % len(CYCLABLE_LAYERS)
+    return CYCLABLE_LAYERS[idx]
+
+
 def encoder_click_action():
     global active_layer, pending_layer
 
@@ -348,10 +362,7 @@ def encoder_turn_action(clockwise):
 
     if btn_pressed:
         btn_turned = True
-        if clockwise:
-            set_layer((active_layer + 1) % LAYER_COUNT)
-        else:
-            set_layer((active_layer - 1) % LAYER_COUNT)
+        set_layer(next_cyclable_layer(active_layer, clockwise))
         return
 
     if active_layer in (L_BASE, L_EDIT, L_FN, L_SYS, L_NAV, L_NUM):
@@ -362,7 +373,7 @@ def encoder_turn_action(clockwise):
         rgb_value = min(255, rgb_value + 8) if clockwise else max(0, rgb_value - 8)
         apply_rgb()
     elif active_layer == L_SELECT:
-        pending_layer = (pending_layer + 1) % LAYER_COUNT if clockwise else (pending_layer - 1) % LAYER_COUNT
+        pending_layer = next_cyclable_layer(pending_layer, clockwise)
 
 
 apply_rgb()
