@@ -1,0 +1,11 @@
+Adafruit GFX Library
+Adafruit SSD1306
+Adafruit NeoPixel
+Encoder
+
+# Usually built-in on RP2040 cores:
+Keyboard
+Mouse
+
+# Optional, for true media keys (volume/mute/play/...):
+HID-Project
