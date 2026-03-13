@@ -5,12 +5,12 @@
 // Layer definitions
 // ---------------------------------------------------------------------------
 enum layer_names {
-    _BASE   = 0,  // Navigation
-    _EDIT   = 1,  // Edit / clipboard
-    _MEDIA  = 2,  // Media controls
-    _FN     = 3,  // Function keys
-    _RGB    = 4,  // RGB controls
-    _SELECT = 5   // Layer selector
+    _BASE,
+    _EDIT,
+    _MEDIA,
+    _FN,
+    _RGB,
+    _SELECT
 };
 
 // ---------------------------------------------------------------------------
@@ -216,43 +216,31 @@ bool oled_task_user(void) {
 // Key maps
 // ---------------------------------------------------------------------------
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-
-    // Layer 0 – Navigation
     [_BASE] = LAYOUT(
         LGUI(KC_TAB),  KC_UP,    LALT(KC_TAB),
         KC_LEFT,       KC_ENT,   KC_RGHT,
         LCTL(KC_Z),    KC_DOWN,  LCTL(KC_R)
     ),
-
-    // Layer 1 – Edit / clipboard
     [_EDIT] = LAYOUT(
         LCTL(KC_A),         LCTL(KC_C),   LCTL(KC_V),
         LCTL(KC_X),         LCTL(KC_ENT), KC_NO,
         LCTL(LSFT(KC_Z)),   KC_SPC,       KC_BSPC
     ),
-
-    // Layer 2 – Media controls
     [_MEDIA] = LAYOUT(
         KC_MPRV,  KC_MSEL,  KC_MNXT,
         KC_MRWD,  KC_MPLY,  KC_MFFD,
         KC_DOWN,  KC_MSTP,  KC_UP
     ),
-
-    // Layer 3 – Function keys (F13-F21)
     [_FN] = LAYOUT(
         KC_F13,  KC_F14,  KC_F15,
         KC_F16,  KC_F17,  KC_F18,
         KC_F19,  KC_F20,  KC_F21
     ),
-
-    // Layer 4 – RGB controls
     [_RGB] = LAYOUT(
         UG_SPDU,  UG_SPDD,  UG_TOGG,
         UG_HUEU,  UG_HUED,  UG_VALU,
         UG_SATU,  UG_SATD,  UG_VALD
     ),
-
-    // Layer 5 – Layer selector (each key directly jumps to a layer)
     [_SELECT] = LAYOUT(
         TO(1),  TO(2),  TO(3),
         TO(4),  TO(0),  KC_NO,
