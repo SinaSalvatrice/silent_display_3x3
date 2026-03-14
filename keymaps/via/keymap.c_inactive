@@ -41,38 +41,6 @@ void matrix_scan_user(void) {
     last_pressed = pressed;
 }
 
-bool encoder_update_user(uint8_t index, bool clockwise) {
-    (void)index;
-
-    if (rgb_on) {
-        if (clockwise) {
-            rgb_val = (rgb_val <= 247) ? (rgb_val + 8) : 255;
-        } else {
-            rgb_val = (rgb_val >= 8) ? (rgb_val - 8) : 0;
-        }
-        rgblight_sethsv_noeeprom(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, rgb_val);
-    }
-
-    clockwise ? tap_code(KC_UP) : tap_code(KC_DOWN);
-    return false;
-}
-
-#ifdef OLED_ENABLE
-oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    return OLED_ROTATION_0;
-}
-
-bool oled_task_user(void) {
-    oled_clear();
-    oled_write_ln_P(PSTR("silent 3x3"), false);
-    oled_write_P(PSTR("RGB: "), false);
-    oled_write_ln_P(rgb_on ? PSTR("on") : PSTR("off"), false);
-    oled_write_P(PSTR("Val: "), false);
-    oled_write(get_u8_str(rgb_val, ' '), false);
-    oled_write_ln_P(PSTR(""), false);
-    return false;
-}
-#endif
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] = LAYOUT(
