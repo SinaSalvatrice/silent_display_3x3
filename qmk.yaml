@@ -1,0 +1,42 @@
+# QMK keyboard configuration for silent_display_3x3
+
+keyboard_name: "silent_display_3x3"
+manufacturer: "SinaSalvatrice"
+maintainer: "SinaSalvatrice"
+
+# MCU and hardware
+mcu: "RP2040"
+bootloader: "rp2040"
+
+# Features
+features:
+  rgb_matrix: false
+  rgblight: true
+  backlight: false
+  ws2812: true
+  mousekey: false
+  extrakey: false
+  encoder: true
+  oled: true
+
+# Keymap locations
+keymaps:
+  - "keymaps/via"
+  - "keymaps/default"
+  - "keymaps/custom"
+
+# Source files
+sources:
+  - "silent_display_3x3.c"
+  - "silent_display_3x3.h"
+  - "keymaps/via/keymap.c"
+
+# Build options
+build:
+  console_enable: false
+  encoder_enable: true
+  oled_enable: true
+  rgblight_enable: true
+
+# Extra
+description: "QMK config for silent_display_3x3 RP2040 keyboard with encoder and OLED."
