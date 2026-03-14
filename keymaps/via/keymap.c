@@ -3,6 +3,15 @@
 // ...existing code...
 #include QMK_KEYBOARD_H
 
+enum layers {
+    _BASE,
+    _EDIT,
+    _MEDIA,
+    _FN,
+    _RGB,
+    _SELECT
+};
+
 static bool rgb_on = true;
 static uint8_t rgb_val = RGBLIGHT_DEFAULT_VAL;
 
