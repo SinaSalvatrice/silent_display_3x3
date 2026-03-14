@@ -62,15 +62,6 @@ static void apply_rgb_for_layer(uint8_t layer) {
 #endif
 }
 
-// ---------------------------------------------------------------------------
-// Keyboard init
-// ---------------------------------------------------------------------------
-void keyboard_post_init_user(void) {
-
-
-    gpio_set_pin_input_high(ENCODER_BTN_PIN);
-    apply_rgb_for_layer(_BASE);
-}
 
 // ---------------------------------------------------------------------------
 // Layer change hook – update RGB colour
@@ -265,7 +256,6 @@ void keyboard_post_init_user(void) {
     rgblight_sethsv_noeeprom(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, rgb_val);
 }
 
-void matrix_scan_user(void) {
     static bool last_pressed = false;
     bool pressed = (gpio_read_pin(ENCODER_BTN_PIN) == 0);
 
@@ -282,9 +272,8 @@ void matrix_scan_user(void) {
     }
 
     last_pressed = pressed;
-}
 
-bool encoder_update_user(uint8_t index, bool clockwise) {
+
     (void)index;
 
     if (rgb_on) {
@@ -298,14 +287,9 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
 
     clockwise ? tap_code(KC_UP) : tap_code(KC_DOWN);
     return false;
-}
 
-#ifdef OLED_ENABLE
-oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    return OLED_ROTATION_0;
-}
 
-bool oled_task_user(void) {
+
     oled_clear();
     oled_write_ln_P(PSTR("silent 3x3"), false);
     oled_write_P(PSTR("RGB: "), false);
@@ -314,8 +298,8 @@ bool oled_task_user(void) {
     oled_write(get_u8_str(rgb_val, ' '), false);
     oled_write_ln_P(PSTR(""), false);
     return false;
-}
-#endif
+
+#endif  // OLED_ENABLE
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] = LAYOUT(
