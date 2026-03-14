@@ -14,7 +14,7 @@
             { "pin_a": "GP8", "pin_b": "GP9", "resolution": 4 }
         ]
     },
-    "ws2812": { "pin": "GP15" },
+    "ws2812": { "pin": "GP13" },
     "rgblight": {
         "led_count": 9,
         "animations": {
