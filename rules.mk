@@ -14,6 +14,7 @@ ENCODER_MAP_ENABLE = no
 OLED_ENABLE       = yes
 OLED_DRIVER       = ssd1306
 WEAR_LEVELING_DRIVER = rp2040_flash
+QMK_KEYBOARD_H = keyboards/silent_display_3x3/silent_display_3x3.h
 SRC += keyboards/silent_display_3x3/silent_display_3x3.h
 SRC += keyboards/silent_display_3x3/keymaps/via/keymap.c
 
