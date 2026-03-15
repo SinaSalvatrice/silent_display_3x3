@@ -1,17 +1,6 @@
-#include "../silent_display_3x3.h"
-#include <stdbool.h>
-#include <stdint.h>
-#ifdef ENCODER_BTN_PIN
-#  include "gpio.h"
-#else
-#  define ENCODER_BTN_PIN 0
-#  define gpio_set_pin_input_high(pin)
-#  define gpio_read_pin(pin) 1
-#endif
+#include QMK_KEYBOARD_H
+#include "gpio.h"
 
-// ---------------------------------------------------------------------------
-// Layer definitions
-// ---------------------------------------------------------------------------
 enum layer_names {
     _BASE,
     _EDIT,
@@ -24,104 +13,106 @@ enum layer_names {
     _EXTRA3
 };
 
-// ---------------------------------------------------------------------------
-// Encoder button state
-// ---------------------------------------------------------------------------
-static bool     btn_pressed          = false;
-static bool     btn_held_with_turn   = false;
+static bool btn_pressed = false;
+static bool btn_held_with_turn = false;
+static uint8_t pending_layer = _BASE;
 
-// ---------------------------------------------------------------------------
-// Layer-selector state
-// ---------------------------------------------------------------------------
-static uint8_t pending_layer = 0;
-
-// ---------------------------------------------------------------------------
-// RGB state
-// ---------------------------------------------------------------------------
-static bool    user_rgb_on  = true;
-static uint8_t current_val  = 80;
+#ifdef RGBLIGHT_ENABLE
+static bool user_rgb_on = true;
+static uint8_t current_val = RGBLIGHT_DEFAULT_VAL;
 
 static uint8_t hue_for_layer(uint8_t layer) {
     switch (layer) {
-        case _BASE:   return 149;  // Teal
-        case _EDIT:   return 64;   // Yellow
-        case _MEDIA:  return 170;  // Blue
-        case _FN:     return 213;  // Purple
-        case _RGB:    return 0;    // Red
-        case _SELECT: return 85;   // Green
-        case _EXTRA1: return 30;   // Orange
-        case _EXTRA2: return 110;  // Cyan
-        case _EXTRA3: return 200;  // Pink
+        case _BASE:   return 149; // teal
+        case _EDIT:   return  64; // yellow
+        case _MEDIA:  return 170; // blue
+        case _FN:     return 213; // purple
+        case _RGB:    return   0; // red
+        case _SELECT: return  85; // green
+        case _EXTRA1: return  30; // orange
+        case _EXTRA2: return 110; // cyan
+        case _EXTRA3: return 200; // pink
         default:      return 149;
     }
 }
 
 static void apply_rgb_for_layer(uint8_t layer) {
-#ifdef RGBLIGHT_ENABLE
     if (!user_rgb_on) {
         rgblight_disable_noeeprom();
         return;
     }
+
     rgblight_enable_noeeprom();
     rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
-    rgblight_sethsv_noeeprom(hue_for_layer(layer), 255, current_val);
+    rgblight_sethsv_noeeprom(hue_for_layer(layer), RGBLIGHT_DEFAULT_SAT, current_val);
+}
+#endif
+
+void keyboard_post_init_user(void) {
+    gpio_set_pin_input_high(ENCODER_BTN_PIN);
+
+#ifdef RGBLIGHT_ENABLE
+    apply_rgb_for_layer(_BASE);
 #endif
 }
 
-
-// ---------------------------------------------------------------------------
-// Layer change hook – update RGB colour
-// ---------------------------------------------------------------------------
 layer_state_t layer_state_set_user(layer_state_t state) {
+#ifdef RGBLIGHT_ENABLE
     uint8_t layer = get_highest_layer(state | default_layer_state);
     apply_rgb_for_layer(layer);
+#endif
     return state;
 }
 
-// ---------------------------------------------------------------------------
-// Encoder button handling (pin not in matrix → polled in matrix_scan_user)
-// ---------------------------------------------------------------------------
 void matrix_scan_user(void) {
     bool is_pressed = (gpio_read_pin(ENCODER_BTN_PIN) == 0);
 
     if (is_pressed && !btn_pressed) {
-        // Rising edge: button just pressed
-        btn_pressed        = true;
+        btn_pressed = true;
         btn_held_with_turn = false;
     } else if (!is_pressed && btn_pressed) {
-        // Falling edge: button just released
         btn_pressed = false;
 
         if (!btn_held_with_turn) {
-            // Short-click action per current layer
             uint8_t layer = get_highest_layer(layer_state | default_layer_state);
+
             switch (layer) {
                 case _BASE:
-                    pending_layer = 0;
+                    pending_layer = _BASE;
                     layer_move(_SELECT);
                     break;
+
                 case _EDIT:
                     tap_code16(LCTL(KC_S));
                     break;
+
                 case _MEDIA:
                     tap_code(KC_MUTE);
                     break;
+
                 case _FN:
                     tap_code(KC_F23);
                     break;
+
                 case _RGB:
+#ifdef RGBLIGHT_ENABLE
                     user_rgb_on = !user_rgb_on;
                     apply_rgb_for_layer(get_highest_layer(layer_state | default_layer_state));
+#endif
                     break;
+
                 case _SELECT:
                     layer_move(pending_layer);
                     break;
+
                 case _EXTRA1:
                     tap_code(KC_F1);
                     break;
+
                 case _EXTRA2:
                     tap_code(KC_F2);
                     break;
+
                 case _EXTRA3:
                     tap_code(KC_F3);
                     break;
@@ -130,17 +121,14 @@ void matrix_scan_user(void) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Encoder rotation
-// ---------------------------------------------------------------------------
 bool encoder_update_user(uint8_t index, bool clockwise) {
     (void)index;
 
     uint8_t layer = get_highest_layer(layer_state | default_layer_state);
 
     if (btn_pressed) {
-        // Hold button + rotate → cycle active layer (0-8, skip _SELECT)
         btn_held_with_turn = true;
+
         if (clockwise) {
             uint8_t next = (layer >= _EXTRA3) ? _BASE : (layer + 1);
             layer_move(next);
@@ -153,50 +141,59 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
 
     switch (layer) {
         case _BASE:
+            clockwise ? tap_code(KC_DOWN) : tap_code(KC_UP);
+            break;
+
         case _EDIT:
-        case _FN:
-            clockwise ? tap_code16(MS_WHLU) : tap_code16(MS_WHLD);
+            clockwise ? tap_code16(LCTL(KC_Z)) : tap_code16(LCTL(KC_Y));
             break;
 
         case _MEDIA:
             clockwise ? tap_code(KC_VOLU) : tap_code(KC_VOLD);
             break;
 
+        case _FN:
+            clockwise ? tap_code(KC_PGDN) : tap_code(KC_PGUP);
+            break;
+
         case _RGB:
+#ifdef RGBLIGHT_ENABLE
             if (clockwise) {
                 current_val = (current_val <= 247) ? (current_val + 8) : 255;
             } else {
                 current_val = (current_val >= 8) ? (current_val - 8) : 0;
             }
+
             if (user_rgb_on) {
-                rgblight_sethsv_noeeprom(hue_for_layer(_RGB), 255, current_val);
+                rgblight_sethsv_noeeprom(hue_for_layer(_RGB), RGBLIGHT_DEFAULT_SAT, current_val);
             }
+#endif
             break;
 
         case _SELECT:
             if (clockwise) {
-                pending_layer = (pending_layer + 1) % 9;
+                pending_layer = (pending_layer >= _EXTRA3) ? _BASE : (pending_layer + 1);
             } else {
-                pending_layer = (pending_layer == 0) ? 8 : (pending_layer - 1);
+                pending_layer = (pending_layer <= _BASE) ? _EXTRA3 : (pending_layer - 1);
             }
             break;
 
         case _EXTRA1:
-            tap_code(KC_F4);
+            clockwise ? tap_code(KC_RIGHT) : tap_code(KC_LEFT);
             break;
+
         case _EXTRA2:
-            tap_code(KC_F5);
+            clockwise ? tap_code(KC_2) : tap_code(KC_1);
             break;
+
         case _EXTRA3:
-            tap_code(KC_F6);
+            clockwise ? tap_code(KC_B) : tap_code(KC_A);
             break;
     }
+
     return false;
 }
 
-// ---------------------------------------------------------------------------
-// OLED display (SSD1306 via I2C)
-// ---------------------------------------------------------------------------
 #ifdef OLED_ENABLE
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
     return OLED_ROTATION_0;
@@ -204,151 +201,95 @@ oled_rotation_t oled_init_user(oled_rotation_t rotation) {
 
 static void oled_write_layer_name(uint8_t layer) {
     switch (layer) {
-        case _BASE:   oled_write_P(PSTR("Base   "), false); break;
-        case _EDIT:   oled_write_P(PSTR("Edit   "), false); break;
-        case _MEDIA:  oled_write_P(PSTR("Media  "), false); break;
-        case _FN:     oled_write_P(PSTR("Fn Keys"), false); break;
-        case _RGB:    oled_write_P(PSTR("RGB    "), false); break;
-        case _SELECT: oled_write_P(PSTR("Select "), false); break;
-        case _EXTRA1: oled_write_P(PSTR("Extra1  "), false); break;
-        case _EXTRA2: oled_write_P(PSTR("Extra2  "), false); break;
-        case _EXTRA3: oled_write_P(PSTR("Extra3  "), false); break;
-        default:      oled_write_P(PSTR("???    "), false); break;
+        case _BASE:   oled_write_P(PSTR("Base"), false);   break;
+        case _EDIT:   oled_write_P(PSTR("Edit"), false);   break;
+        case _MEDIA:  oled_write_P(PSTR("Media"), false);  break;
+        case _FN:     oled_write_P(PSTR("Fn"), false);     break;
+        case _RGB:    oled_write_P(PSTR("RGB"), false);    break;
+        case _SELECT: oled_write_P(PSTR("Select"), false); break;
+        case _EXTRA1: oled_write_P(PSTR("Extra1"), false); break;
+        case _EXTRA2: oled_write_P(PSTR("Extra2"), false); break;
+        case _EXTRA3: oled_write_P(PSTR("Extra3"), false); break;
+        default:      oled_write_P(PSTR("???"), false);    break;
     }
 }
 
 bool oled_task_user(void) {
     uint8_t layer = get_highest_layer(layer_state | default_layer_state);
 
-    oled_write_P(PSTR("Silent 3x3\n"), false);
+    oled_clear();
+    oled_write_ln_P(PSTR("silent 3x3"), false);
     oled_write_P(PSTR("Layer: "), false);
     oled_write_layer_name(layer);
-    oled_write_P(PSTR("\n"), false);
+    oled_write_ln_P(PSTR(""), false);
 
     if (layer == _SELECT) {
         oled_write_P(PSTR("Goto: "), false);
         oled_write_layer_name(pending_layer);
-        oled_write_P(PSTR("\n"), false);
-    } else {
-        oled_write_P(PSTR("\n"), false);
+        oled_write_ln_P(PSTR(""), false);
     }
+
+#ifdef RGBLIGHT_ENABLE
+    oled_write_P(PSTR("RGB: "), false);
+    oled_write_ln_P(user_rgb_on ? PSTR("on") : PSTR("off"), false);
+#endif
 
     return false;
 }
-#endif  // OLED_ENABLE
+#endif
 
-// ---------------------------------------------------------------------------
-// Key maps
-// ---------------------------------------------------------------------------
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_BASE] = LAYOUT(
-        LGUI(KC_TAB),  KC_UP,    LALT(KC_TAB),
-        KC_LEFT,       KC_ENT,   KC_RGHT,
-        LCTL(KC_Z),    KC_DOWN,  LCTL(KC_R)
+        LGUI(KC_TAB), KC_UP,        LALT(KC_TAB),
+        KC_LEFT,      KC_ENT,       KC_RGHT,
+        LCTL(KC_Z),   KC_DOWN,      LCTL(KC_R)
     ),
+
     [_EDIT] = LAYOUT(
-        LCTL(KC_A),         LCTL(KC_C),   LCTL(KC_V),
-        LCTL(KC_X),         LCTL(KC_ENT), KC_NO,
-        LCTL(LSFT(KC_Z)),   KC_SPC,       KC_BSPC
+        LCTL(KC_A),      LCTL(KC_C),      LCTL(KC_V),
+        LCTL(KC_X),      LCTL(KC_S),      KC_DEL,
+        LCTL(LSFT(KC_Z)), KC_SPC,         KC_BSPC
     ),
+
     [_MEDIA] = LAYOUT(
-        KC_MPRV,  KC_MSEL,  KC_MNXT,
-        KC_MRWD,  KC_MPLY,  KC_MFFD,
-        KC_DOWN,  KC_MSTP,  KC_UP
+        KC_MPRV, KC_MPLY, KC_MNXT,
+        KC_MUTE, KC_MSTP, KC_VOLU,
+        KC_DOWN, KC_UP,   KC_VOLD
     ),
+
     [_FN] = LAYOUT(
-        KC_F13,  KC_F14,  KC_F15,
-        KC_F16,  KC_F17,  KC_F18,
-        KC_F19,  KC_F20,  KC_F21
+        KC_F13, KC_F14, KC_F15,
+        KC_F16, KC_F17, KC_F18,
+        KC_F19, KC_F20, KC_F21
     ),
+
     [_RGB] = LAYOUT(
-        UG_SPDU,  UG_SPDD,  UG_TOGG,
-        UG_HUEU,  UG_HUED,  UG_VALU,
-        UG_SATU,  UG_SATD,  UG_VALD
+        RGB_SPI, RGB_SPD, RGB_TOG,
+        RGB_HUI, RGB_HUD, RGB_VAI,
+        RGB_SAI, RGB_SAD, RGB_VAD
     ),
+
     [_SELECT] = LAYOUT(
-        TO(1),  TO(2),  TO(3),
-        TO(4),  TO(5),  TO(6),
-        TO(7),  TO(8),  TO(0)
+        TO(_EDIT),   TO(_MEDIA),  TO(_FN),
+        TO(_RGB),    TO(_SELECT), TO(_EXTRA1),
+        TO(_EXTRA2), TO(_EXTRA3), TO(_BASE)
     ),
+
     [_EXTRA1] = LAYOUT(
         KC_F1, KC_F2, KC_F3,
         KC_F4, KC_F5, KC_F6,
         KC_F7, KC_F8, KC_F9
     ),
+
     [_EXTRA2] = LAYOUT(
         KC_1, KC_2, KC_3,
         KC_4, KC_5, KC_6,
         KC_7, KC_8, KC_9
     ),
+
     [_EXTRA3] = LAYOUT(
         KC_A, KC_B, KC_C,
         KC_D, KC_E, KC_F,
         KC_G, KC_H, KC_I
-    ),
-};
-};
-#include QMK_KEYBOARD_H
-
-static bool rgb_on = true;
-static uint8_t rgb_val = RGBLIGHT_DEFAULT_VAL;
-
-void keyboard_post_init_user(void) {
-    gpio_set_pin_input_high(ENCODER_BTN_PIN);
-    rgblight_enable_noeeprom();
-    rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
-    rgblight_sethsv_noeeprom(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, rgb_val);
-}
-
-    static bool last_pressed = false;
-    bool pressed = (gpio_read_pin(ENCODER_BTN_PIN) == 0);
-
-    // Toggle RGB on encoder button release.
-    if (last_pressed && !pressed) {
-        rgb_on = !rgb_on;
-        if (rgb_on) {
-            rgblight_enable_noeeprom();
-            rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
-            rgblight_sethsv_noeeprom(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, rgb_val);
-        } else {
-            rgblight_disable_noeeprom();
-        }
-    }
-
-    last_pressed = pressed;
-
-
-    (void)index;
-
-    if (rgb_on) {
-        if (clockwise) {
-            rgb_val = (rgb_val <= 247) ? (rgb_val + 8) : 255;
-        } else {
-            rgb_val = (rgb_val >= 8) ? (rgb_val - 8) : 0;
-        }
-        rgblight_sethsv_noeeprom(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, rgb_val);
-    }
-
-    clockwise ? tap_code(KC_UP) : tap_code(KC_DOWN);
-    return false;
-
-
-
-    oled_clear();
-    oled_write_ln_P(PSTR("silent 3x3"), false);
-    oled_write_P(PSTR("RGB: "), false);
-    oled_write_ln_P(rgb_on ? PSTR("on") : PSTR("off"), false);
-    oled_write_P(PSTR("Val: "), false);
-    oled_write(get_u8_str(rgb_val, ' '), false);
-    oled_write_ln_P(PSTR(""), false);
-    return false;
-
-#endif  // OLED_ENABLE
-
-const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT(
-        KC_1, KC_2, KC_3,
-        KC_4, KC_5, KC_6,
-        KC_7, KC_8, KC_9
-    ),
+    )
 };
