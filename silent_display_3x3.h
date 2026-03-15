@@ -1,6 +1,6 @@
 
 #pragma once
-#include "quantum.h"
+#include "../quantum/quantum.h"
 
 // silent_display_3x3.h
 #ifndef SILENT_DISPLAY_3X3_H
