@@ -1,4 +1,4 @@
-#include QMK_KEYBOARD_H
+#include "silent_display_3x3.h"
 #include <stdbool.h>
 #include <stdint.h>
 #ifdef ENCODER_BTN_PIN
@@ -18,7 +18,10 @@ enum layer_names {
     _MEDIA,
     _FN,
     _RGB,
-    _SELECT
+    _SELECT,
+    _EXTRA1,
+    _EXTRA2,
+    _EXTRA3
 };
 
 // ---------------------------------------------------------------------------
@@ -46,6 +49,9 @@ static uint8_t hue_for_layer(uint8_t layer) {
         case _FN:     return 213;  // Purple
         case _RGB:    return 0;    // Red
         case _SELECT: return 85;   // Green
+        case _EXTRA1: return 30;   // Orange
+        case _EXTRA2: return 110;  // Cyan
+        case _EXTRA3: return 200;  // Pink
         default:      return 149;
     }
 }
@@ -62,13 +68,6 @@ static void apply_rgb_for_layer(uint8_t layer) {
 #endif
 }
 
-// ---------------------------------------------------------------------------
-// Keyboard init – configure encoder button pin
-// ---------------------------------------------------------------------------
-void keyboard_post_init_user(void) {
-    gpio_set_pin_input_high(ENCODER_BTN_PIN);
-    apply_rgb_for_layer(_BASE);
-}
 
 // ---------------------------------------------------------------------------
 // Layer change hook – update RGB colour
@@ -117,6 +116,15 @@ void matrix_scan_user(void) {
                 case _SELECT:
                     layer_move(pending_layer);
                     break;
+                case _EXTRA1:
+                    tap_code(KC_F1);
+                    break;
+                case _EXTRA2:
+                    tap_code(KC_F2);
+                    break;
+                case _EXTRA3:
+                    tap_code(KC_F3);
+                    break;
             }
         }
     }
@@ -131,13 +139,13 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
     uint8_t layer = get_highest_layer(layer_state | default_layer_state);
 
     if (btn_pressed) {
-        // Hold button + rotate → cycle active layer (0-4, skip _SELECT)
+        // Hold button + rotate → cycle active layer (0-8, skip _SELECT)
         btn_held_with_turn = true;
         if (clockwise) {
-            uint8_t next = (layer >= _RGB) ? _BASE : (layer + 1);
+            uint8_t next = (layer >= _EXTRA3) ? _BASE : (layer + 1);
             layer_move(next);
         } else {
-            uint8_t prev = (layer <= _BASE) ? _RGB : (layer - 1);
+            uint8_t prev = (layer <= _BASE) ? _EXTRA3 : (layer - 1);
             layer_move(prev);
         }
         return false;
@@ -167,10 +175,20 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
 
         case _SELECT:
             if (clockwise) {
-                pending_layer = (pending_layer + 1) % 5;
+                pending_layer = (pending_layer + 1) % 9;
             } else {
-                pending_layer = (pending_layer == 0) ? 4 : (pending_layer - 1);
+                pending_layer = (pending_layer == 0) ? 8 : (pending_layer - 1);
             }
+            break;
+
+        case _EXTRA1:
+            tap_code(KC_F4);
+            break;
+        case _EXTRA2:
+            tap_code(KC_F5);
+            break;
+        case _EXTRA3:
+            tap_code(KC_F6);
             break;
     }
     return false;
@@ -192,6 +210,9 @@ static void oled_write_layer_name(uint8_t layer) {
         case _FN:     oled_write_P(PSTR("Fn Keys"), false); break;
         case _RGB:    oled_write_P(PSTR("RGB    "), false); break;
         case _SELECT: oled_write_P(PSTR("Select "), false); break;
+        case _EXTRA1: oled_write_P(PSTR("Extra1  "), false); break;
+        case _EXTRA2: oled_write_P(PSTR("Extra2  "), false); break;
+        case _EXTRA3: oled_write_P(PSTR("Extra3  "), false); break;
         default:      oled_write_P(PSTR("???    "), false); break;
     }
 }
@@ -247,7 +268,87 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [_SELECT] = LAYOUT(
         TO(1),  TO(2),  TO(3),
-        TO(4),  TO(0),  KC_NO,
-        KC_NO,  KC_NO,  KC_NO
+        TO(4),  TO(5),  TO(6),
+        TO(7),  TO(8),  TO(0)
+    ),
+    [_EXTRA1] = LAYOUT(
+        KC_F1, KC_F2, KC_F3,
+        KC_F4, KC_F5, KC_F6,
+        KC_F7, KC_F8, KC_F9
+    ),
+    [_EXTRA2] = LAYOUT(
+        KC_1, KC_2, KC_3,
+        KC_4, KC_5, KC_6,
+        KC_7, KC_8, KC_9
+    ),
+    [_EXTRA3] = LAYOUT(
+        KC_A, KC_B, KC_C,
+        KC_D, KC_E, KC_F,
+        KC_G, KC_H, KC_I
+    ),
+};
+};
+#include QMK_KEYBOARD_H
+
+static bool rgb_on = true;
+static uint8_t rgb_val = RGBLIGHT_DEFAULT_VAL;
+
+void keyboard_post_init_user(void) {
+    gpio_set_pin_input_high(ENCODER_BTN_PIN);
+    rgblight_enable_noeeprom();
+    rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+    rgblight_sethsv_noeeprom(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, rgb_val);
+}
+
+    static bool last_pressed = false;
+    bool pressed = (gpio_read_pin(ENCODER_BTN_PIN) == 0);
+
+    // Toggle RGB on encoder button release.
+    if (last_pressed && !pressed) {
+        rgb_on = !rgb_on;
+        if (rgb_on) {
+            rgblight_enable_noeeprom();
+            rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+            rgblight_sethsv_noeeprom(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, rgb_val);
+        } else {
+            rgblight_disable_noeeprom();
+        }
+    }
+
+    last_pressed = pressed;
+
+
+    (void)index;
+
+    if (rgb_on) {
+        if (clockwise) {
+            rgb_val = (rgb_val <= 247) ? (rgb_val + 8) : 255;
+        } else {
+            rgb_val = (rgb_val >= 8) ? (rgb_val - 8) : 0;
+        }
+        rgblight_sethsv_noeeprom(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, rgb_val);
+    }
+
+    clockwise ? tap_code(KC_UP) : tap_code(KC_DOWN);
+    return false;
+
+
+
+    oled_clear();
+    oled_write_ln_P(PSTR("silent 3x3"), false);
+    oled_write_P(PSTR("RGB: "), false);
+    oled_write_ln_P(rgb_on ? PSTR("on") : PSTR("off"), false);
+    oled_write_P(PSTR("Val: "), false);
+    oled_write(get_u8_str(rgb_val, ' '), false);
+    oled_write_ln_P(PSTR(""), false);
+    return false;
+
+#endif  // OLED_ENABLE
+
+const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+    [0] = LAYOUT(
+        KC_1, KC_2, KC_3,
+        KC_4, KC_5, KC_6,
+        KC_7, KC_8, KC_9
     ),
 };
