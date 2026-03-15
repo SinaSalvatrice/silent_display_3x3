@@ -2,7 +2,7 @@
   "name": "Silent Display 3x3",
   "vendorId": "0x5349",
   "productId": "0x6401",
-  "lighting": "none",
+  "lighting": "qmk_rgblight",
   "matrix": {
     "rows": 3,
     "cols": 3
