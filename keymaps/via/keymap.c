@@ -1,6 +1,6 @@
-#include QMK_KEYBOARD_H
-#include "lib/lib8tion/lib8tion.h"
-#include "timer.h"
+#include "../silent_display_3x3.h"
+#include <stdbool.h>
+#include <stdint.h>
 #ifdef ENCODER_BTN_PIN
 #  include "gpio.h"
 #else
