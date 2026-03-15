@@ -8,8 +8,7 @@ on:
       - "config.h"
       - "keyboard.json"
       - "readme.md"
-      - "silent_display_3x3"
-      -  silent_display_3x3"
+      - "silent_display_3x3.c"
       - "silent_display_3x3.h"
       - "rules.mk"
       - "keymaps/**"
@@ -60,27 +59,27 @@ jobs:
           cd ~/qmk_firmware
           qmk compile -j 1 -kb silent_display_3x3 -km via
 
-      - name: Compile Vial firmware
+      - name: Compile custom firmware
         run: |
           cd ~/qmk_firmware
-          qmk compile -j 1 -kb silent_display_3x3 -km vial
+          qmk compile -j 1 -kb silent_display_3x3 -km custom
 
       - name: Collect firmware artifacts
         run: |
           set -e
           mkdir -p "$GITHUB_WORKSPACE/artifacts"
           VIA_UF2_FILE=$(find "$HOME/qmk_firmware" -type f -name 'silent_display_3x3_via.uf2' | head -n 1)
-          VIAL_UF2_FILE=$(find "$HOME/qmk_firmware" -type f -name 'silent_display_3x3_vial.uf2' | head -n 1)
+          CUSTOM_UF2_FILE=$(find "$HOME/qmk_firmware" -type f -name 'silent_display_3x3_custom.uf2' | head -n 1)
           if [ -z "$VIA_UF2_FILE" ]; then
             echo "Expected VIA firmware silent_display_3x3_via.uf2 was not produced."
             exit 1
           fi
-          if [ -z "$VIAL_UF2_FILE" ]; then
-            echo "Expected Vial firmware silent_display_3x3_vial.uf2 was not produced."
+          if [ -z "$CUSTOM_UF2_FILE" ]; then
+            echo "Expected custom firmware silent_display_3x3_custom.uf2 was not produced."
             exit 1
           fi
           cp "$VIA_UF2_FILE" "$GITHUB_WORKSPACE/artifacts/"
-          cp "$VIAL_UF2_FILE" "$GITHUB_WORKSPACE/artifacts/"
+          cp "$CUSTOM_UF2_FILE" "$GITHUB_WORKSPACE/artifacts/"
 
       - name: Upload VIA firmware artifact
         uses: actions/upload-artifact@v4
@@ -89,9 +88,9 @@ jobs:
           path: artifacts/silent_display_3x3_via.uf2
           if-no-files-found: error
 
-      - name: Upload Vial firmware artifact
+      - name: Upload custom firmware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: silent_display_3x3_vial_firmware
-          path: artifacts/silent_display_3x3_vial.uf2
+          name: silent_display_3x3_custom_firmware
+          path: artifacts/silent_display_3x3_custom.uf2
           if-no-files-found: error

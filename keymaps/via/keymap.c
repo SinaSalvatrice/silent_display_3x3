@@ -62,6 +62,13 @@ static void apply_rgb_for_layer(uint8_t layer) {
 #endif
 }
 
+// ---------------------------------------------------------------------------
+// Keyboard init – configure encoder button pin
+// ---------------------------------------------------------------------------
+void keyboard_post_init_user(void) {
+    gpio_set_pin_input_high(ENCODER_BTN_PIN);
+    apply_rgb_for_layer(_BASE);
+}
 
 // ---------------------------------------------------------------------------
 // Layer change hook – update RGB colour
@@ -242,69 +249,5 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TO(1),  TO(2),  TO(3),
         TO(4),  TO(0),  KC_NO,
         KC_NO,  KC_NO,  KC_NO
-    ),
-};
-#include QMK_KEYBOARD_H
-
-static bool rgb_on = true;
-static uint8_t rgb_val = RGBLIGHT_DEFAULT_VAL;
-
-void keyboard_post_init_user(void) {
-    gpio_set_pin_input_high(ENCODER_BTN_PIN);
-    rgblight_enable_noeeprom();
-    rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
-    rgblight_sethsv_noeeprom(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, rgb_val);
-}
-
-    static bool last_pressed = false;
-    bool pressed = (gpio_read_pin(ENCODER_BTN_PIN) == 0);
-
-    // Toggle RGB on encoder button release.
-    if (last_pressed && !pressed) {
-        rgb_on = !rgb_on;
-        if (rgb_on) {
-            rgblight_enable_noeeprom();
-            rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
-            rgblight_sethsv_noeeprom(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, rgb_val);
-        } else {
-            rgblight_disable_noeeprom();
-        }
-    }
-
-    last_pressed = pressed;
-
-
-    (void)index;
-
-    if (rgb_on) {
-        if (clockwise) {
-            rgb_val = (rgb_val <= 247) ? (rgb_val + 8) : 255;
-        } else {
-            rgb_val = (rgb_val >= 8) ? (rgb_val - 8) : 0;
-        }
-        rgblight_sethsv_noeeprom(RGBLIGHT_DEFAULT_HUE, RGBLIGHT_DEFAULT_SAT, rgb_val);
-    }
-
-    clockwise ? tap_code(KC_UP) : tap_code(KC_DOWN);
-    return false;
-
-
-
-    oled_clear();
-    oled_write_ln_P(PSTR("silent 3x3"), false);
-    oled_write_P(PSTR("RGB: "), false);
-    oled_write_ln_P(rgb_on ? PSTR("on") : PSTR("off"), false);
-    oled_write_P(PSTR("Val: "), false);
-    oled_write(get_u8_str(rgb_val, ' '), false);
-    oled_write_ln_P(PSTR(""), false);
-    return false;
-
-#endif  // OLED_ENABLE
-
-const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT(
-        KC_1, KC_2, KC_3,
-        KC_4, KC_5, KC_6,
-        KC_7, KC_8, KC_9
     ),
 };
