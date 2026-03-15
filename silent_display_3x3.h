@@ -1,3 +1,2 @@
+// silent_display_3x3.h
 #pragma once
-// Place any necessary definitions here.
-#define XXX 0
