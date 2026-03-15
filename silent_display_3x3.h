@@ -2,12 +2,10 @@
 #pragma once
 #include "quantum.h"
 
-#define LAYOUT( \
-	K00, K01, K02, \
-	K10, K11, K12, \
-	K20, K21, K22 \
-) { \
-	{ K00, K01, K02 }, \
-	{ K10, K11, K12 }, \
-	{ K20, K21, K22 } \
-}
+// silent_display_3x3.h
+#ifndef SILENT_DISPLAY_3X3_H
+#define SILENT_DISPLAY_3X3_H
+
+// Add your function declarations and macros here
+
+#endif // SILENT_DISPLAY_3X3_H
