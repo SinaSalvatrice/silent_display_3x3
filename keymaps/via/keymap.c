@@ -1,5 +1,11 @@
-#include QMK_KEYBOARD_H
-#include "gpio.h"
+#include "quantum.h"
+#include "keyboard.h"
+#include "matrix.h"
+#include "keymap.h"
+#include "rgblight.h"
+#include "oled_driver.h"
+#include <stdbool.h>
+#include <stdint.h>
 
 enum layer_names {
     _BASE,
@@ -12,6 +18,12 @@ enum layer_names {
     _EXTRA2,
     _EXTRA3
 };
+
+#define ENCODER_BTN_PIN B2 // Change B2 to your actual encoder button pin
+
+#ifndef B2
+#define B2 2 // Fallback definition if not defined elsewhere
+#endif
 
 static bool btn_pressed = false;
 static bool btn_held_with_turn = false;
@@ -47,6 +59,12 @@ static void apply_rgb_for_layer(uint8_t layer) {
     rgblight_sethsv_noeeprom(hue_for_layer(layer), RGBLIGHT_DEFAULT_SAT, current_val);
 }
 #endif
+
+void gpio_set_pin_input_high(uint8_t pin); // Declare if not already declared
+
+// Provide a stub for gpio_set_pin_input_high and gpio_read_pin if not defined elsewhere
+__attribute__((weak)) void gpio_set_pin_input_high(uint8_t pin) { (void)pin; }
+__attribute__((weak)) int gpio_read_pin(uint8_t pin) { (void)pin; return 1; }
 
 void keyboard_post_init_user(void) {
     gpio_set_pin_input_high(ENCODER_BTN_PIN);
